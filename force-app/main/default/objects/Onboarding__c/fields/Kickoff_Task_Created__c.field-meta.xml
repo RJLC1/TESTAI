@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Kickoff_Task_Created__c</fullName>
+    <label>Kickoff Task Created</label>
+    <description>Internal flag to prevent duplicate kickoff preparation tasks.</description>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

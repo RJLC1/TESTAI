@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>Onboarding__c</members>
+        <members>Onboarding__c.Customer_Name__c</members>
+        <members>Onboarding__c.Primary_Contact_Email__c</members>
+        <members>Onboarding__c.Kickoff_Date__c</members>
+        <members>Onboarding__c.Implementation_Owner__c</members>
+        <members>Onboarding__c.Contract_Signed__c</members>
+        <members>Onboarding__c.Welcome_Email_Sent__c</members>
+        <members>Onboarding__c.Initial_Data_Received__c</members>
+        <members>Onboarding__c.Status__c</members>
+        <members>Onboarding__c.Kickoff_Task_Created__c</members>
+        <members>Onboarding__c.Missing_Requirements__c</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Kickoff_Meeting_Reminder</members>
+        <name>CustomNotificationType</name>
+    </types>
+    <types>
+        <members>Onboarding_Status_and_Task_Automation</members>
+        <members>Onboarding_Kickoff_Reminder</members>
+        <name>Flow</name>
+    </types>
+    <types>
+        <members>Onboarding_Record_Page</members>
+        <name>FlexiPage</name>
+    </types>
+    <version>60.0</version>
+</Package>

@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <label>Onboarding Status &amp; Task Automation</label>
+    <processType>AutoLaunchedFlow</processType>
+    <status>Active</status>
+    <start>
+        <elementSubtype>CB_RecordTriggeredFlow</elementSubtype>
+        <object>Onboarding__c</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+
+    <formulas>
+        <name>fxDueDateTwoBusinessDaysPrior</name>
+        <dataType>Date</dataType>
+        <expression>
+            CASE(
+                WEEKDAY({!$Record.Kickoff_Date__c}),
+                1, {!$Record.Kickoff_Date__c} - 3,
+                2, {!$Record.Kickoff_Date__c} - 4,
+                3, {!$Record.Kickoff_Date__c} - 4,
+                {!$Record.Kickoff_Date__c} - 2
+            )
+        </expression>
+    </formulas>
+
+    <formulas>
+        <name>fxIsCriteriaMet</name>
+        <dataType>Boolean</dataType>
+        <expression>
+            {!$Record.Contract_Signed__c} &amp;&amp;
+            {!$Record.Welcome_Email_Sent__c} &amp;&amp;
+            {!$Record.Initial_Data_Received__c} &amp;&amp;
+            NOT(ISBLANK({!$Record.Kickoff_Date__c})) &amp;&amp;
+            NOT(ISBLANK({!$Record.Implementation_Owner__c}))
+        </expression>
+    </formulas>
+
+    <decisions>
+        <name>Check_Readiness_Criteria</name>
+        <label>Check Readiness Criteria</label>
+        <locationX>176</locationX>
+        <locationY>100</locationY>
+        <defaultConnector>
+            <targetReference>Check_If_Reverted</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Not Ready Criteria</defaultConnectorLabel>
+        <rules>
+            <name>Criteria_Met</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>fxIsCriteriaMet</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Check_Status_Update_Needed</targetReference>
+            </connector>
+            <label>Criteria Met</label>
+        </rules>
+    </decisions>
+
+    <decisions>
+        <name>Check_Status_Update_Needed</name>
+        <label>Check Status Update Needed</label>
+        <locationX>300</locationX>
+        <locationY>200</locationY>
+        <defaultConnector>
+            <targetReference>Check_First_Time_Ready</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Already Ready or Completed</defaultConnectorLabel>
+        <rules>
+            <name>Needs_Ready_Status</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Not Ready</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Status_To_Ready</targetReference>
+            </connector>
+            <label>Needs Ready Status</label>
+        </rules>
+    </decisions>
+
+    <recordUpdates>
+        <name>Update_Status_To_Ready</name>
+        <label>Update Status To Ready</label>
+        <locationX>300</locationX>
+        <locationY>320</locationY>
+        <connector>
+            <targetReference>Check_First_Time_Ready</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>Status__c</field>
+            <value>
+                <stringValue>Ready for Kickoff</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+
+    <decisions>
+        <name>Check_First_Time_Ready</name>
+        <label>Check First Time Ready</label>
+        <locationX>300</locationX>
+        <locationY>440</locationY>
+        <defaultConnectorLabel>Task Already Created</defaultConnectorLabel>
+        <rules>
+            <name>First_Time_Ready</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Kickoff_Task_Created__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Kickoff_Preparation_Task</targetReference>
+            </connector>
+            <label>First Time Ready</label>
+        </rules>
+    </decisions>
+
+    <recordCreates>
+        <name>Create_Kickoff_Preparation_Task</name>
+        <label>Create Kickoff Preparation Task</label>
+        <locationX>300</locationX>
+        <locationY>560</locationY>
+        <connector>
+            <targetReference>Mark_Task_Created_Flag</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>Subject</field>
+            <value>
+                <stringValue>Prepare customer kickoff meeting</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>$Record.Implementation_Owner__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>WhatId</field>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>ActivityDate</field>
+            <value>
+                <elementReference>fxDueDateTwoBusinessDaysPrior</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Not Started</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Priority</field>
+            <value>
+                <stringValue>High</stringValue>
+            </value>
+        </inputAssignments>
+        <object>Task</object>
+    </recordCreates>
+
+    <recordUpdates>
+        <name>Mark_Task_Created_Flag</name>
+        <label>Mark Task Created Flag</label>
+        <locationX>300</locationX>
+        <locationY>680</locationY>
+        <inputAssignments>
+            <field>Kickoff_Task_Created__c</field>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+
+    <decisions>
+        <name>Check_If_Reverted</name>
+        <label>Check If Reverted</label>
+        <locationX>500</locationX>
+        <locationY>200</locationY>
+        <defaultConnectorLabel>No Change Needed</defaultConnectorLabel>
+        <rules>
+            <name>Revert_To_Not_Ready</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Ready for Kickoff</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Status_To_Not_Ready</targetReference>
+            </connector>
+            <label>Revert To Not Ready</label>
+        </rules>
+    </decisions>
+
+    <recordUpdates>
+        <name>Update_Status_To_Not_Ready</name>
+        <label>Update Status To Not Ready</label>
+        <locationX>500</locationX>
+        <locationY>320</locationY>
+        <inputAssignments>
+            <field>Status__c</field>
+            <value>
+                <stringValue>Not Ready</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+</Flow>

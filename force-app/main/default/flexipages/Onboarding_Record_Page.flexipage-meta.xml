@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FlexiPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <flexiPageTypes>RecordPage</flexiPageTypes>
+    <label>Customer Onboarding Record Page</label>
+    <masterLabel>Customer Onboarding Record Page</masterLabel>
+    <object>Onboarding__c</object>
+    <template>
+        <name>flexipage:recordHomeTemplateDesktop</name>
+    </template>
+    <regions>
+        <item>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>actionNames</name>
+                    <value>Edit,Delete</value>
+                </componentInstanceProperties>
+                <componentName>force:highlightsPanel</componentName>
+            </componentInstance>
+        </item>
+        <name>header</name>
+        <type>Region</type>
+    </regions>
+    <regions>
+        <item>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>hidePicklistUrl</name>
+                    <value>false</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>picklistField</name>
+                    <value>Status__c</value>
+                </componentInstanceProperties>
+                <componentName>runtime_sales_pathassistant:pathAssistant</componentName>
+            </componentInstance>
+        </item>
+        <item>
+            <componentInstance>
+                <componentName>force:detailPanel</componentName>
+            </componentInstance>
+        </item>
+        <name>main</name>
+        <type>Region</type>
+    </regions>
+    <regions>
+        <item>
+            <componentInstance>
+                <componentName>runtime_sales_necessary:activityPanel</componentName>
+            </componentInstance>
+        </item>
+        <name>sidebar</name>
+        <type>Region</type>
+    </regions>
+</FlexiPage>
