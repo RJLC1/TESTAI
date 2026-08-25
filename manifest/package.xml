@@ -12,20 +12,29 @@
         <members>Onboarding__c.Status__c</members>
         <members>Onboarding__c.Kickoff_Task_Created__c</members>
         <members>Onboarding__c.Missing_Requirements__c</members>
+        <members>Onboarding__c.Escalated__c</members>
+        <members>Onboarding__c.Escalation_Reason__c</members>
+        <members>Onboarding__c.Escalation_Triggered__c</members>
         <name>CustomObject</name>
     </types>
     <types>
         <members>Kickoff_Meeting_Reminder</members>
+        <members>Onboarding_Escalation</members>
         <name>CustomNotificationType</name>
     </types>
     <types>
         <members>Onboarding_Status_and_Task_Automation</members>
         <members>Onboarding_Kickoff_Reminder</members>
+        <members>Onboarding_Overdue_Escalation</members>
         <name>Flow</name>
     </types>
     <types>
         <members>Onboarding_Record_Page</members>
         <name>FlexiPage</name>
+    </types>
+    <types>
+        <members>Customer_Success_Onboarding</members>
+        <name>PermissionSet</name>
     </types>
     <version>60.0</version>
 </Package>
