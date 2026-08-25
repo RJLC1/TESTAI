@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Escalation_Triggered__c</fullName>
+    <label>Escalation Triggered</label>
+    <description>System-maintained flag preventing repeated automatic escalation for the same onboarding delay.</description>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>
