@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <label>Onboarding Overdue Escalation</label>
+    <processType>AutoLaunchedFlow</processType>
+    <status>Active</status>
+    <start>
+        <object>Onboarding__c</object>
+        <schedule>
+            <frequency>Daily</frequency>
+            <startDate>2026-08-26</startDate>
+            <startTime>08:15:00.000Z</startTime>
+        </schedule>
+        <triggerType>Scheduled</triggerType>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Status__c</field>
+            <operator>NotEqualTo</operator>
+            <value><stringValue>Kickoff Completed</stringValue></value>
+        </filters>
+        <filters>
+            <field>Kickoff_Date__c</field>
+            <operator>IsNull</operator>
+            <value><booleanValue>false</booleanValue></value>
+        </filters>
+        <filters>
+            <field>Escalation_Triggered__c</field>
+            <operator>EqualTo</operator>
+            <value><booleanValue>false</booleanValue></value>
+        </filters>
+    </start>
+    <formulas>
+        <name>fxDaysPastKickoff</name>
+        <dataType>Number</dataType>
+        <scale>0</scale>
+        <expression>TODAY() - {!$Record.Kickoff_Date__c}</expression>
+    </formulas>
+    <decisions>
+        <name>Check_Overdue</name>
+        <label>Check Overdue</label>
+        <locationX>176</locationX><locationY>100</locationY>
+        <defaultConnectorLabel>Not Overdue</defaultConnectorLabel>
+        <rules>
+            <name>More_Than_Two_Days_Overdue</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>fxDaysPastKickoff</leftValueReference>
+                <operator>GreaterThan</operator>
+                <rightValue><numberValue>2</numberValue></rightValue>
+            </conditions>
+            <connector><targetReference>Check_Reason</targetReference></connector>
+            <label>More Than Two Days Overdue</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Check_Reason</name>
+        <label>Check Escalation Reason</label>
+        <locationX>300</locationX><locationY>200</locationY>
+        <defaultConnector><targetReference>Mark_Escalated</targetReference></defaultConnector>
+        <defaultConnectorLabel>Preserve Existing Reason</defaultConnectorLabel>
+        <rules>
+            <name>Reason_Is_Blank</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Escalation_Reason__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue><booleanValue>true</booleanValue></rightValue>
+            </conditions>
+            <connector><targetReference>Set_Default_Reason</targetReference></connector>
+            <label>Reason Is Blank</label>
+        </rules>
+    </decisions>
+    <assignments>
+        <name>Set_Default_Reason</name>
+        <label>Set Default Reason</label>
+        <locationX>200</locationX><locationY>320</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.Escalation_Reason__c</assignToReference>
+            <operator>Assign</operator>
+            <value><stringValue>Onboarding remains incomplete more than 2 days after the kickoff date.</stringValue></value>
+        </assignmentItems>
+        <connector><targetReference>Mark_Escalated</targetReference></connector>
+    </assignments>
+    <assignments>
+        <name>Mark_Escalated</name>
+        <label>Mark Escalated</label>
+        <locationX>300</locationX><locationY>440</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.Escalated__c</assignToReference>
+            <operator>Assign</operator>
+            <value><booleanValue>true</booleanValue></value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>$Record.Escalation_Triggered__c</assignToReference>
+            <operator>Assign</operator>
+            <value><booleanValue>true</booleanValue></value>
+        </assignmentItems>
+        <connector><targetReference>Update_Onboarding</targetReference></connector>
+    </assignments>
+    <recordUpdates>
+        <name>Update_Onboarding</name>
+        <label>Update Onboarding</label>
+        <locationX>300</locationX><locationY>560</locationY>
+        <connector><targetReference>Check_Owner</targetReference></connector>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <decisions>
+        <name>Check_Owner</name>
+        <label>Check Implementation Owner</label>
+        <locationX>300</locationX><locationY>680</locationY>
+        <defaultConnectorLabel>No Assigned Owner</defaultConnectorLabel>
+        <rules>
+            <name>Owner_Assigned</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Implementation_Owner__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue><booleanValue>false</booleanValue></rightValue>
+            </conditions>
+            <connector><targetReference>Get_Escalation_Notification_Type</targetReference></connector>
+            <label>Owner Assigned</label>
+        </rules>
+    </decisions>
+    <recordLookups>
+        <name>Get_Escalation_Notification_Type</name>
+        <label>Get Escalation Notification Type</label>
+        <locationX>300</locationX><locationY>800</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector><targetReference>Assign_Recipient_ID</targetReference></connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field><operator>EqualTo</operator>
+            <value><stringValue>Onboarding_Escalation</stringValue></value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>CustomNotificationType</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <assignments>
+        <name>Assign_Recipient_ID</name>
+        <label>Assign Recipient ID</label>
+        <locationX>300</locationX><locationY>920</locationY>
+        <assignmentItems>
+            <assignToReference>varRecipientIds</assignToReference>
+            <operator>Add</operator>
+            <value><elementReference>$Record.Implementation_Owner__c</elementReference></value>
+        </assignmentItems>
+        <connector><targetReference>Send_Escalation_Notification</targetReference></connector>
+    </assignments>
+    <actionCalls>
+        <name>Send_Escalation_Notification</name>
+        <label>Send Escalation Notification</label>
+        <locationX>300</locationX><locationY>1040</locationY>
+        <actionName>customNotificationAction</actionName>
+        <actionType>customNotificationAction</actionType>
+        <inputParameters><name>customNotifTypeId</name><value><elementReference>Get_Escalation_Notification_Type.Id</elementReference></value></inputParameters>
+        <inputParameters><name>body</name><value><stringValue>Onboarding for {!$Record.Customer_Name__c} is more than 2 days past its kickoff date and remains incomplete. Reason: {!$Record.Escalation_Reason__c}</stringValue></value></inputParameters>
+        <inputParameters><name>title</name><value><stringValue>Onboarding Escalation</stringValue></value></inputParameters>
+        <inputParameters><name>recipientIds</name><value><elementReference>varRecipientIds</elementReference></value></inputParameters>
+        <inputParameters><name>targetId</name><value><elementReference>$Record.Id</elementReference></value></inputParameters>
+    </actionCalls>
+    <variables>
+        <name>varRecipientIds</name><dataType>String</dataType><isCollection>true</isCollection><isInput>false</isInput><isOutput>false</isOutput>
+    </variables>
+</Flow>
